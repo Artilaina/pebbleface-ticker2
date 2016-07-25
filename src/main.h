@@ -11,6 +11,7 @@ typedef struct ClaySettings {
   bool Animations;
   bool Bluetoothvibe;
   GColor HourHand;
+  GColor SecondHand;
 } __attribute__((__packed__)) ClaySettings;
 
 static void prv_default_settings();

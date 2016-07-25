@@ -17,7 +17,8 @@
             "SecondTick",
             "Animations",
             "Bluetoothvibe",
-            "HourHand"
+            "HourHand",
+            "SecondHand"
         ],
         "projectType": "native",
         "resources": {

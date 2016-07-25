@@ -112,6 +112,7 @@ static void prv_default_settings() {
   settings.BackgroundColor = GColorBlack;
   settings.ForegroundColor = GColorWhite;
   settings.HourHand = GColorRed;
+  settings.SecondHand = GColorLightGray;
   settings.SecondTick = false;
   settings.Animations = true;
   settings.Bluetoothvibe = false;
@@ -165,6 +166,12 @@ static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) 
   Tuple *hourhand_color_t = dict_find(iter, MESSAGE_KEY_HourHand);
   if (hourhand_color_t) {
     settings.HourHand = GColorFromHEX(hourhand_color_t->value->int32);
+  }
+
+  // Second hand Color
+  Tuple *secondhand_color_t = dict_find(iter, MESSAGE_KEY_SecondHand);
+  if (secondhand_color_t) {
+    settings.SecondHand = GColorFromHEX(secondhand_color_t->value->int32);
   }
 
   // Second Tick
@@ -258,10 +265,7 @@ void update_layer(Layer *me, GContext* ctx) {
 	
 	if (settings.SecondTick == 1) {
 	tick_timer_service_subscribe(SECOND_UNIT, &handle_tick);
-	graphics_context_set_stroke_color(ctx, GColorWhite);
-#ifdef PBL_COLOR
-	graphics_context_set_stroke_color(ctx, GColorLightGray);
-#endif			
+	graphics_context_set_stroke_color(ctx, settings.SecondHand);
 	graphics_draw_line(ctx, center, secondHand);
 
     } else {
