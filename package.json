@@ -1,0 +1,123 @@
+{
+    "author": "chops",
+    "dependencies": {
+        "pebble-clay": "^1.0.1"
+    },
+    "keywords": [],
+    "name": "ticker2",
+    "pebble": {
+        "capabilities": [
+            "configurable"
+        ],
+        "displayName": "Ticker2",
+        "enableMultiJS": true,
+        "messageKeys": [
+            "BackgroundColor",
+            "ForegroundColor",
+            "SecondTick",
+            "Animations",
+            "Bluetoothvibe",
+            "HourHand"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "file": "fonts/enhanced_dot_digital-7",
+                    "name": "FONT_CUSTOM_40",
+                    "targetPlatforms": null,
+                    "type": "font"
+                },
+                {
+                    "file": "images/charging",
+                    "name": "IMAGE_BATT_CHARGING",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-10.png",
+                    "name": "IMAGE_BATT_10",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-20.png",
+                    "name": "IMAGE_BATT_20",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-30.png",
+                    "name": "IMAGE_BATT_30",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-40.png",
+                    "name": "IMAGE_BATT_40",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-50.png",
+                    "name": "IMAGE_BATT_50",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-60.png",
+                    "name": "IMAGE_BATT_60",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-70.png",
+                    "name": "IMAGE_BATT_70",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-80.png",
+                    "name": "IMAGE_BATT_80",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-90.png",
+                    "name": "IMAGE_BATT_90",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/circle-100.png",
+                    "name": "IMAGE_BATT_100",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "characterRegex": "[+0-9]",
+                    "file": "fonts/battery text",
+                    "name": "FONT_CUSTOM_22",
+                    "targetPlatforms": null,
+                    "type": "font"
+                },
+                {
+                    "file": "images/dot_back.png",
+                    "name": "IMAGE_BACK",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                }
+            ]
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt",
+            "chalk"
+        ],
+        "uuid": "16e98366-a436-473e-afd1-6b0464bdb264",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "1.0.0"
+}
