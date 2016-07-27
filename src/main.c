@@ -29,11 +29,10 @@ Layer* layer;
 static TextLayer *s_time_layer;
 TextLayer *battery_text_layer;
 
-GBitmap* background;
-GBitmap* background2;
-
 static GBitmap *background_image;
 static BitmapLayer *background_layer;
+static GBitmap *background_image2;
+static BitmapLayer *background_layer2;
 
 static GFont custom_font;
 static GFont custom_font1;
@@ -46,8 +45,6 @@ bool date = true;
 bool month = true;
 bool seconds = true;
 bool bgnd = true;
-
-static bool appStarted = false;
 
 GBitmap *img_battery_100;
 GBitmap *img_battery_90;
@@ -86,10 +83,17 @@ PropertyAnimation *s_box_animation;
 // prototype so anim_stopped_handler can compile (implementation below)
 void animate_text();
 
+// A struct for our specific settings (see main.h)
+ClaySettings settings;
+
+
+
 // when watch is shaken or tapped
 static void accel_tap_handler(AccelAxisType axis, int32_t direction) {   
 	
     layer_set_hidden(layer, true);
+
+    layer_set_hidden(bitmap_layer_get_layer(background_layer2), false);
     layer_set_hidden(bitmap_layer_get_layer(layer_batt_img), true);
     layer_set_hidden(s_canvas_layer, true);
 
@@ -104,9 +108,6 @@ static void accel_tap_handler(AccelAxisType axis, int32_t direction) {
 
 // ------- load settings --------- //
 
-// A struct for our specific settings (see main.h)
-ClaySettings settings;
-
 // Initialize the default settings
 static void prv_default_settings() {
   settings.BackgroundColor = GColorBlack;
@@ -116,8 +117,8 @@ static void prv_default_settings() {
   settings.SecondTick = false;
   settings.Animations = true;
   settings.Bluetoothvibe = false;
+  settings.Bg = false;
 }
-
 // Read settings from persistent storage
 static void prv_load_settings() {
   // Load the default settings
@@ -140,11 +141,18 @@ static void prv_update_display() {
 
   // Foreground Color
   text_layer_set_text_color(s_time_layer, settings.ForegroundColor);
+  text_layer_set_text_color(battery_text_layer, settings.ForegroundColor);
 
 	if (settings.Animations) {
   		accel_tap_service_subscribe(&accel_tap_handler);
 	} else {
 		accel_tap_service_unsubscribe();
+	}
+	
+    if (settings.Bg) {
+		layer_set_hidden(bitmap_layer_get_layer(background_layer), true);
+	} else {	
+		layer_set_hidden(bitmap_layer_get_layer(background_layer), false);
 	}
 }
 
@@ -192,6 +200,11 @@ static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) 
     settings.Bluetoothvibe = bluetoothvibe_t->value->int32 == 1;
   }
 	
+  // Bluetoothvibe
+  Tuple *bg_t = dict_find(iter, MESSAGE_KEY_Bg);
+  if (bg_t) {
+    settings.Bg = bg_t->value->int32 == 1;
+  }
   // Save the new settings to persistent storage
   prv_save_settings();
 }
@@ -205,7 +218,8 @@ static void canvas_update_proc(Layer *this_layer, GContext *ctx) {
   // Get the center of the screen (non full-screen)
   GPoint center = GPoint(bounds.size.w / 2, (bounds.size.h / 2));
 
-  graphics_context_set_fill_color(ctx, GColorBlack);
+//  graphics_context_set_fill_color(ctx, GColorBlack);
+  graphics_context_set_fill_color(ctx, settings.BackgroundColor);
   graphics_fill_circle(ctx, center, 16);
 
 }
@@ -313,7 +327,8 @@ void update_layer(Layer *me, GContext* ctx) {
 }
 
 void anim_stopped_handler(Animation *animation, bool finished, void *context) {
-	  if (finished) {
+  if (finished) {
+      layer_set_hidden(bitmap_layer_get_layer(background_layer2), true);
       layer_set_hidden(bitmap_layer_get_layer(layer_batt_img), false);
       layer_set_hidden(s_canvas_layer, false);
 	  layer_set_hidden(layer, false);
@@ -336,7 +351,6 @@ void animate_text() {
   animation_set_duration((Animation*)s_box_animation, 15000 );
   animation_set_curve((Animation*)s_box_animation, AnimationCurveLinear);
   animation_set_delay((Animation*)s_box_animation, 0);
-
   animation_schedule((Animation*)s_box_animation);
 }
 
@@ -348,19 +362,15 @@ void update_battery_state(BatteryChargeState charge_state) {
         bitmap_layer_set_bitmap(layer_batt_img, img_battery_charge);
         snprintf(battery_text, sizeof(battery_text), "+%d", charge_state.charge_percent);
 		layer_set_hidden(text_layer_get_layer(battery_text_layer), false);
-
     } else {
 		 layer_set_hidden(text_layer_get_layer(battery_text_layer), true);
-	
 #else
     if (charge_state.is_charging) {
         bitmap_layer_set_bitmap(layer_batt_img, img_battery_charge);
         snprintf(battery_text, sizeof(battery_text), "+%d", charge_state.charge_percent);
 		layer_set_hidden(text_layer_get_layer(battery_text_layer), false);
-
     } else {
 		layer_set_hidden(text_layer_get_layer(battery_text_layer), true);
-
 #endif
 	
         if (charge_state.charge_percent <= 10) {
@@ -420,14 +430,6 @@ static void prv_window_load(Window *window) {
   custom_font1 = fonts_load_custom_font( resource_get_handle( RESOURCE_ID_FONT_CUSTOM_22 ) );
 
 	
-#ifdef PBL_PLATFORM_CHALK
-  layer = layer_create(GRect(0,0,180,180));
-#else
-  layer = layer_create(GRect(0,0,144,168));
-#endif	
-  layer_set_update_proc(layer, update_layer);
-  layer_add_child(window_get_root_layer(window), layer);	
-	
 //load background image [ticker]	
   background_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACK);
 #ifdef PBL_PLATFORM_CHALK
@@ -438,7 +440,31 @@ static void prv_window_load(Window *window) {
   bitmap_layer_set_bitmap(background_layer, background_image);
   GCompOp compositing_mod_back = GCompOpSet;
   bitmap_layer_set_compositing_mode(background_layer, compositing_mod_back);	
-  layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(background_layer));	
+  layer_add_child(window_layer, bitmap_layer_get_layer(background_layer));	
+  layer_set_hidden(bitmap_layer_get_layer(background_layer), true);
+
+//load background image [analog]	
+  background_image2 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACK);
+#ifdef PBL_PLATFORM_CHALK
+  background_layer2 = bitmap_layer_create(GRect(0, 0, 180, 180));
+#else
+  background_layer2 = bitmap_layer_create(GRect(0, 0, 144, 168));
+#endif		
+  bitmap_layer_set_bitmap(background_layer2, background_image2);
+  GCompOp compositing_mod_back2 = GCompOpSet;
+  bitmap_layer_set_compositing_mode(background_layer2, compositing_mod_back2);	
+  layer_add_child(window_layer, bitmap_layer_get_layer(background_layer2));	
+  layer_set_hidden(bitmap_layer_get_layer(background_layer2), true);
+
+  // create hands layer
+	
+#ifdef PBL_PLATFORM_CHALK
+  layer = layer_create(GRect(0,0,180,180));
+#else
+  layer = layer_create(GRect(0,0,144,168));
+#endif	
+  layer_set_update_proc(layer, update_layer);
+  layer_add_child(window_get_root_layer(window), layer);	
 	
 // create other layers
 	
@@ -489,7 +515,8 @@ static void prv_window_load(Window *window) {
 #else
 	battery_text_layer = text_layer_create(GRect(0, 68, 144, 26));
 #endif	
-  text_layer_set_text_color(battery_text_layer, GColorWhite);
+  text_layer_set_text_color(battery_text_layer, settings.ForegroundColor);
+//  text_layer_set_text_color(battery_text_layer, GColorWhite);
   text_layer_set_background_color(battery_text_layer, GColorClear);	
   text_layer_set_text_alignment(battery_text_layer, GTextAlignmentCenter);
   text_layer_set_font(battery_text_layer, custom_font1);
@@ -527,11 +554,11 @@ static void prv_window_unload(Window *window) {
   gbitmap_destroy(background_image);
   background_image = NULL;
 	
-  gbitmap_destroy(background);
-  background = NULL;
-  gbitmap_destroy(background2);
-  background2 = NULL;
-		
+  layer_remove_from_parent(bitmap_layer_get_layer(background_layer2));
+  bitmap_layer_destroy(background_layer2);
+  gbitmap_destroy(background_image2);
+  background_image2 = NULL;
+
   layer_destroy(layer);
 	
   layer_destroy(s_canvas_layer);

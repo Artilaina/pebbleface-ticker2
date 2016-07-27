@@ -10,6 +10,7 @@ typedef struct ClaySettings {
   bool SecondTick;
   bool Animations;
   bool Bluetoothvibe;
+  bool Bg;
   GColor HourHand;
   GColor SecondHand;
 } __attribute__((__packed__)) ClaySettings;

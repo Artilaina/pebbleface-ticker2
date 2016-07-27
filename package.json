@@ -18,11 +18,19 @@
             "Animations",
             "Bluetoothvibe",
             "HourHand",
-            "SecondHand"
+            "SecondHand",
+            "Bg"
         ],
         "projectType": "native",
         "resources": {
             "media": [
+                {
+                    "file": "images/MENU.png",
+                    "menuIcon": true,
+                    "name": "MENU_IMAGE",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
                 {
                     "file": "fonts/enhanced_dot_digital-7",
                     "name": "FONT_CUSTOM_40",
@@ -120,5 +128,5 @@
             "watchface": true
         }
     },
-    "version": "1.0.0"
+    "version": "1.1.0"
 }

@@ -60,6 +60,12 @@ module.exports = [
         "messageKey": "Bluetoothvibe",
         "label": "Bluetooth disconnect vibe (off/on)",
         "defaultValue": false
+      },
+	  {
+        "type": "toggle",
+        "messageKey": "Bg",
+        "label": "Show dot pattern on analog screen",
+        "defaultValue": false
       }
     ]
   },
