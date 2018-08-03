@@ -113,11 +113,14 @@ static void prv_default_settings() {
   settings.BackgroundColor = GColorBlack;
   settings.ForegroundColor = GColorWhite;
   settings.HourHand = GColorRed;
+  settings.MinuteHand = GColorLightGray;
   settings.SecondHand = GColorLightGray;
   settings.SecondTick = false;
   settings.Animations = true;
+  settings.Duration = 1500;
   settings.Bluetoothvibe = false;
   settings.Bg = false;
+  
 }
 // Read settings from persistent storage
 static void prv_load_settings() {
@@ -176,6 +179,12 @@ static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) 
     settings.HourHand = GColorFromHEX(hourhand_color_t->value->int32);
   }
 
+  // Minute hand Color
+  Tuple *minutehand_color_t = dict_find(iter, MESSAGE_KEY_MinuteHand);
+  if (minutehand_color_t) {
+    settings.MinuteHand = GColorFromHEX(minutehand_color_t->value->int32);
+  }  
+
   // Second hand Color
   Tuple *secondhand_color_t = dict_find(iter, MESSAGE_KEY_SecondHand);
   if (secondhand_color_t) {
@@ -193,6 +202,12 @@ static void prv_inbox_received_handler(DictionaryIterator *iter, void *context) 
   if (animations_t) {
     settings.Animations = animations_t->value->int32 == 1;
   }
+
+  // Duration
+  Tuple *duration_t = dict_find(iter, MESSAGE_KEY_Duration);
+  if (duration_t) {
+    settings.Duration = duration_t->value->int32;
+  }  
 
   // Bluetoothvibe
   Tuple *bluetoothvibe_t = dict_find(iter, MESSAGE_KEY_Bluetoothvibe);
@@ -273,30 +288,32 @@ void update_layer(Layer *me, GContext* ctx) {
 	GPoint minuteHand;
 	GPoint hourHand;
 
-	int32_t second_angle = TRIG_MAX_ANGLE * tick_time->tm_sec / 60;
-	secondHand.y = (int16_t)(-cos_lookup(second_angle) * (int32_t)secondHandLength / TRIG_MAX_RATIO) + center.y;
-	secondHand.x = (int16_t)(sin_lookup(second_angle) * (int32_t)secondHandLength / TRIG_MAX_RATIO) + center.x;
-	
-	if (settings.SecondTick == 1) {
-	tick_timer_service_subscribe(SECOND_UNIT, &handle_tick);
-	graphics_context_set_stroke_color(ctx, settings.SecondHand);
-	graphics_draw_line(ctx, center, secondHand);
-
-    } else {
-	tick_timer_service_subscribe(MINUTE_UNIT, &handle_tick);
-	}	
-	
-	int32_t minute_angle = TRIG_MAX_ANGLE * tick_time->tm_min / 60;
+  int32_t minute_angle = TRIG_MAX_ANGLE * tick_time->tm_min / 60;
 	minuteHand.y = (int16_t)(-cos_lookup(minute_angle) * (int32_t)minuteHandLength / TRIG_MAX_RATIO) + center.y;
 	minuteHand.x = (int16_t)(sin_lookup(minute_angle) * (int32_t)minuteHandLength / TRIG_MAX_RATIO) + center.x;
 	
 	int32_t hour_angle = (TRIG_MAX_ANGLE * (((tick_time->tm_hour % 12) * 6) + (tick_time->tm_min / 10))) / (12 * 6);
 	hourHand.y = (int16_t)(-cos_lookup(hour_angle) * (int32_t)hourHandLength / TRIG_MAX_RATIO) + center.y;
 	hourHand.x = (int16_t)(sin_lookup(hour_angle) * (int32_t)hourHandLength / TRIG_MAX_RATIO) + center.x;
-	
-  graphics_context_set_stroke_width(ctx, 4);
-  graphics_context_set_antialiased(ctx, ANTIALIASING);
 
+  //------------------------------------------------------------------------------------------------------------//
+  // SECOND HAND	
+	if (settings.SecondTick == 1) {
+    int32_t second_angle = TRIG_MAX_ANGLE * tick_time->tm_sec / 60;
+	  secondHand.y = (int16_t)(-cos_lookup(second_angle) * (int32_t)secondHandLength / TRIG_MAX_RATIO) + center.y;
+	  secondHand.x = (int16_t)(sin_lookup(second_angle) * (int32_t)secondHandLength / TRIG_MAX_RATIO) + center.x;
+
+	  tick_timer_service_subscribe(SECOND_UNIT, &handle_tick);
+	  graphics_context_set_stroke_color(ctx, settings.SecondHand);
+	  graphics_draw_line(ctx, center, secondHand);
+
+  } else {
+	  tick_timer_service_subscribe(MINUTE_UNIT, &handle_tick);
+	}	
+
+	//------------------------------------------------------------------------------------------------------------//
+  // MINUTE HAND
+  
 	//I didn't like how a 2px path rotated, so I'm using two lines next to each other
 	//I need to move the pixels from vertically adjacent to horizontally adjacent based on the position
 	bool addX = (tick_time->tm_min > 20 && tick_time->tm_min < 40) || tick_time->tm_min < 10 || tick_time->tm_min > 50;
@@ -304,12 +321,19 @@ void update_layer(Layer *me, GContext* ctx) {
 	center.y+=!addX?2:0;
 	minuteHand.x+=addX?2:0;
 	minuteHand.y+=!addX?2:0;
-    graphics_context_set_stroke_color(ctx, GColorWhite);
+  
+  graphics_context_set_stroke_width(ctx, 4);
+  graphics_context_set_antialiased(ctx, ANTIALIASING);
+  graphics_context_set_stroke_color(ctx, GColorWhite);
+
 #ifdef PBL_COLOR
-	graphics_context_set_stroke_color(ctx, GColorLightGray);
-#endif			
+	graphics_context_set_stroke_color(ctx, settings.MinuteHand);
+#endif
+
 	graphics_draw_line(ctx, center, minuteHand);
 	
+  //------------------------------------------------------------------------------------------------------------//
+  // HOUR HAND
 	center.x-=addX?1:0;
 	center.y-=!addX?1:0;
 	
@@ -318,7 +342,7 @@ void update_layer(Layer *me, GContext* ctx) {
 	center.y+=!addX?1:0;
 	hourHand.x+=addX?1:0;
 	hourHand.y+=!addX?1:0;
-    graphics_context_set_stroke_color(ctx, GColorWhite);
+  graphics_context_set_stroke_color(ctx, GColorWhite);
 #ifdef PBL_COLOR
 	graphics_context_set_stroke_color(ctx, settings.HourHand);
 #endif
@@ -348,7 +372,7 @@ void animate_text() {
   animation_set_handlers((Animation*)s_box_animation, (AnimationHandlers) {
     .stopped = anim_stopped_handler
   }, NULL);
-  animation_set_duration((Animation*)s_box_animation, 15000 );
+  animation_set_duration((Animation*)s_box_animation, settings.Duration);
   animation_set_curve((Animation*)s_box_animation, AnimationCurveLinear);
   animation_set_delay((Animation*)s_box_animation, 0);
   animation_schedule((Animation*)s_box_animation);
@@ -432,11 +456,8 @@ static void prv_window_load(Window *window) {
 	
 //load background image [ticker]	
   background_image = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACK);
-#ifdef PBL_PLATFORM_CHALK
-  background_layer = bitmap_layer_create(GRect(0, 0, 180, 180));
-#else
-  background_layer = bitmap_layer_create(GRect(0, 0, 144, 168));
-#endif		
+  background_layer = bitmap_layer_create(GRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+
   bitmap_layer_set_bitmap(background_layer, background_image);
   GCompOp compositing_mod_back = GCompOpSet;
   bitmap_layer_set_compositing_mode(background_layer, compositing_mod_back);	
@@ -445,11 +466,8 @@ static void prv_window_load(Window *window) {
 
 //load background image [analog]	
   background_image2 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BACK);
-#ifdef PBL_PLATFORM_CHALK
-  background_layer2 = bitmap_layer_create(GRect(0, 0, 180, 180));
-#else
-  background_layer2 = bitmap_layer_create(GRect(0, 0, 144, 168));
-#endif		
+  background_layer2 = bitmap_layer_create(GRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+
   bitmap_layer_set_bitmap(background_layer2, background_image2);
   GCompOp compositing_mod_back2 = GCompOpSet;
   bitmap_layer_set_compositing_mode(background_layer2, compositing_mod_back2);	
@@ -457,12 +475,8 @@ static void prv_window_load(Window *window) {
   layer_set_hidden(bitmap_layer_get_layer(background_layer2), true);
 
   // create hands layer
-	
-#ifdef PBL_PLATFORM_CHALK
-  layer = layer_create(GRect(0,0,180,180));
-#else
-  layer = layer_create(GRect(0,0,144,168));
-#endif	
+	layer = layer_create(GRect(0,0,WINDOW_WIDTH, WINDOW_HEIGHT));
+
   layer_set_update_proc(layer, update_layer);
   layer_add_child(window_get_root_layer(window), layer);	
 	
@@ -502,12 +516,13 @@ static void prv_window_load(Window *window) {
 
 #ifdef PBL_PLATFORM_CHALK
   layer_batt_img  = bitmap_layer_create(GRect(73, 73, 35, 35));
-	#else
+#else
   layer_batt_img  = bitmap_layer_create(GRect(56, 68, 35, 35));	
-	#endif
+#endif
+  
   bitmap_layer_set_bitmap(layer_batt_img, img_battery_100);
-    GCompOp compositing_mode_batt = GCompOpSet;
-    bitmap_layer_set_compositing_mode(layer_batt_img, compositing_mode_batt);	
+  GCompOp compositing_mode_batt = GCompOpSet;
+  bitmap_layer_set_compositing_mode(layer_batt_img, compositing_mode_batt);	
   layer_add_child(window_layer, bitmap_layer_get_layer(layer_batt_img));
 	
 #ifdef PBL_PLATFORM_CHALK

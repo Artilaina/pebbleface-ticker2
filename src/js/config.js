@@ -22,12 +22,18 @@ module.exports = [
         "defaultValue": "0xFFFFFF",
         "label": "Scrolling text color"
       },
-	  {
+	    {
         "type": "color",
         "messageKey": "HourHand",
         "defaultValue": "0xFF0000",
         "label": "Hour hand color"
       },
+	    {
+        "type": "color",
+        "messageKey": "MinuteHand",
+        "defaultValue": "0xFF0000",
+        "label": "Minute hand color"
+      },      
 	  {
         "type": "color",
         "messageKey": "SecondHand",
@@ -55,6 +61,12 @@ module.exports = [
         "label": "Shake for scrolling date&time (off/on)",
         "defaultValue": true
       },
+      {
+        "type": "slider",
+        "messageKey": "Animation Duration",
+        "label": "Velocity of the text",
+        "defaultValue": 1500
+      },      
 	  {
         "type": "toggle",
         "messageKey": "Bluetoothvibe",

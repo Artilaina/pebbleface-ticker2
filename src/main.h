@@ -9,9 +9,11 @@ typedef struct ClaySettings {
   GColor ForegroundColor;
   bool SecondTick;
   bool Animations;
+  int Duration;
   bool Bluetoothvibe;
   bool Bg;
   GColor HourHand;
+  GColor MinuteHand;
   GColor SecondHand;
 } __attribute__((__packed__)) ClaySettings;
 
