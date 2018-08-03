@@ -12,4 +12,5 @@
 - Cambiar el color de la batería.
 - Añadir el dígito con la hora al final de la aguja horaria.
 - Cambiar el formato de la fecha (¿primero la hora?).
+- Diferentes líneas para el ticker: primero el día de la semana, después el día del mes y después la hora. Quizás a diferentes velocidades.
 - Info en las esquinas: día, temperatura, condiciones, pasos, sueño, ...

@@ -24,7 +24,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 static Window *s_window;
 
 Layer *layer;
-static TextLayer *s_time_layer;
+static TextLayer *s_time_layer, *s_hour_layer;
 TextLayer *battery_text_layer;
 
 static GBitmap *background_image;
@@ -38,11 +38,6 @@ static GFont custom_font1;
 int charge_percent = 0;
 
 bool text_Displayed = false;
-bool weekday = true;
-bool date = true;
-bool month = true;
-bool seconds = true;
-bool bgnd = true;
 
 GBitmap *img_battery_100;
 GBitmap *img_battery_90;
@@ -148,6 +143,7 @@ static void prv_update_display()
   // Foreground Color
   text_layer_set_text_color(s_time_layer, settings.ForegroundColor);
   text_layer_set_text_color(battery_text_layer, settings.ForegroundColor);
+  text_layer_set_text_color(s_hour_layer, settings.HourHand;
 
   if (settings.Animations)
   {
@@ -158,13 +154,14 @@ static void prv_update_display()
     accel_tap_service_unsubscribe();
   }
 
+  // TODO Hay un fallo en la configuración: si se activa "Show dot pattern on analog screen" lo que hace es ocultar el patrón en vez de mostrarlo.
   if (settings.Bg)
   {
-    layer_set_hidden(bitmap_layer_get_layer(background_layer), true);
+    layer_set_hidden(bitmap_layer_get_layer(background_layer), false);
   }
   else
   {
-    layer_set_hidden(bitmap_layer_get_layer(background_layer), false);
+    layer_set_hidden(bitmap_layer_get_layer(background_layer), true);
   }
 }
 
@@ -288,6 +285,8 @@ void update_layer(Layer *me, GContext *ctx)
   time_t temp = time(NULL);
   struct tm *tick_time = localtime(&temp);
 
+  static char s_hour_text[2];
+
   //draw hands
 
   GRect bounds_main = layer_get_bounds(me);
@@ -373,6 +372,9 @@ void update_layer(Layer *me, GContext *ctx)
   graphics_context_set_stroke_color(ctx, settings.HourHand);
 #endif
   graphics_draw_line(ctx, center, hourHand);
+
+  strftime(s_hour_text, sizeof(s_hour_text), %s, tick_time->tm_hour);
+  text_layer_set_text(s_hour_layer, s_hour_text);
 }
 
 void anim_stopped_handler(Animation *animation, bool finished, void *context)
@@ -532,7 +534,13 @@ static void prv_window_load(Window *window)
 #else
   s_time_layer = text_layer_create(GRect(145, 59, 700, 60));
 #endif
+
+#ifdef PBL_COLOR
+  text_layer_set_text_color(s_time_layer, settings.MinuteHand);
+#else
   text_layer_set_text_color(s_time_layer, GColorWhite);
+#endif
+  
   text_layer_set_background_color(s_time_layer, GColorClear);
   text_layer_set_text_alignment(s_time_layer, GTextAlignmentLeft);
   text_layer_set_font(s_time_layer, custom_font);
@@ -575,12 +583,31 @@ static void prv_window_load(Window *window)
 #else
   battery_text_layer = text_layer_create(GRect(0, 68, 144, 26));
 #endif
+
+#ifdef PBL_COLOR
   text_layer_set_text_color(battery_text_layer, settings.ForegroundColor);
-  //  text_layer_set_text_color(battery_text_layer, GColorWhite);
+#else
+  text_layer_set_text_color(battery_text_layer, GColorWhite);
+#endif
   text_layer_set_background_color(battery_text_layer, GColorClear);
   text_layer_set_text_alignment(battery_text_layer, GTextAlignmentCenter);
   text_layer_set_font(battery_text_layer, custom_font1);
   layer_add_child(window_layer, text_layer_get_layer(battery_text_layer));
+
+  //TODO Colocar las horas para pebble round lo dejo para cuando alguien me regale uno y pueda probarlo...
+  s_hour_layer = text_layer_create(GRect(0, (int)(bounds.size.w/2), 5, 10));
+
+#ifdef PBL_COLOR
+  text_layer_set_text_color(s_hour_layer, settings.HourHand);
+#else
+  text_layer_set_text_color(s_hour_layer, GColorWhite);
+#endif
+  
+  text_layer_set_background_color(s_hour_layer, GColorClear);
+  text_layer_set_text_alignment(s_hour_layer, GTextAlignmentCenter);
+  text_layer_set_font(s_hour_layer, custom_font1);
+  layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_hour_layer));
+
 
   // draw first frame
   force_update();
@@ -608,6 +635,7 @@ static void prv_window_unload(Window *window)
   gbitmap_destroy(img_battery_charge);
 
   text_layer_destroy(s_time_layer);
+  text_layer_destroy(s_hour_layer);
   text_layer_destroy(battery_text_layer);
 
   layer_remove_from_parent(bitmap_layer_get_layer(background_layer));
