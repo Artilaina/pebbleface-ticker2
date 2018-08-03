@@ -4,7 +4,8 @@
 #define SETTINGS_KEY 1
 
 // A structure containing our settings
-typedef struct ClaySettings {
+typedef struct ClaySettings
+{
   GColor BackgroundColor;
   GColor ForegroundColor;
   bool SecondTick;

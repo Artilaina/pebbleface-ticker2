@@ -123,10 +123,10 @@
             "basalt",
             "chalk"
         ],
-        "uuid": "16e98366-a436-473e-afd1-6b0464bdb264",
+        "uuid": "ad22fd7b-b24e-438e-8cf9-c0f03a70fb47",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "1.1.0"
+    "version": "1.2.0"
 }
